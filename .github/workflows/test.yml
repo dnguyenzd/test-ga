@@ -2,6 +2,7 @@ name: Create deployment artifacts for branch
 
 on:
   push:
+  workflow_dispatch:
   issue_comment:
     types: [created]
 
