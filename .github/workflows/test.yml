@@ -1,0 +1,26 @@
+name: Create deployment artifacts for branch
+
+on:
+  push:
+  issue_comment:
+    types: [created]
+
+jobs:
+  get-pr-branch-name:
+    name: Get PR branch name
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: zendesk/github-script@v4.0.1
+        with:
+          script: |
+            if (!context.payload.issue) {
+              console.log('no isssue', context);
+              return
+            }
+
+            const { data: pr } = await github.request(context.payload.issue.pull_request.url)
+            if (pr) {
+              console.log('with isssue', context, pr);
+            } else {
+              core.setFailed('failed to find PR with url ' + context.payload.issue.pull_request.url)
+            }
