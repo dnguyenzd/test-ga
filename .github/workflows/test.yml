@@ -6,11 +6,19 @@ on:
   issue_comment:
     types: [created]
 
+env:
+  BRANCH_NAME: main
+
 jobs:
   get-pr-branch-name:
     name: Get PR branch name
     runs-on: ubuntu-20.04
     steps:
+      - name: Echo
+        run: |
+          echo ${{ env.BRANCH_NAME }}
+          echo ${BRANCH_NAME}
+
       - uses: zendesk/github-script@v4.0.1
         with:
           script: |
