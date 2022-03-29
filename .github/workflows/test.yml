@@ -21,22 +21,44 @@ jobs:
           echo ${BRANCH_NAME}
 
       - uses: zendesk/github-script@v4.0.1
+        id: resolve-git-branch
         with:
           script: |
-            if (context.payload.issue) {
+            var { ref, sha } = context;
+
+            if (context.eventName == 'issue_comment') {
+              // workflow is triggered by a comment on a PR, `context.ref` and `context.sha` point to main branch, need to look for branch related to the PR by different way
               const { data: pr } = await github.request(context.payload.issue.pull_request.url)
               if (pr) {
-                console.log(context.eventName, context, pr);
+                ref = pr.head.ref;
+                sha = pr.head.sha;
               } else {
                 core.setFailed('failed to find PR with url ' + context.payload.issue.pull_request.url)
               }
-            } else if (context.payload.pull_request) {
-              const { data: pr } = await github.request(context.payload.pull_request.url)
-              if (pr) {
-                console.log(context.eventName, context, pr);
-              } else {
-                core.setFailed('failed to find PR with url ' + context.payload.issue.pull_request.url)
-              }
-            } else {
-              console.log(context.eventName, context);
             }
+
+            ref = ref.replace(/^refs\/heads\//g, '');
+            console.log(`Triggered by ${context.eventName}, resolved: ref: ${ref}, sha: ${sha}`);
+            core.setOutput('head_ref', ref)
+            core.setOutput('head_sha', sha)
+
+      - uses: zendesk/github-script@v6
+        name: Create status
+        with:
+          script: |
+            const state = 'failure'; // can be error, failure, pending or success
+            const { owner, repo } = context.repo;
+            const { COMMIT: commit } = process.env;
+
+            console.log(`=== creating ${state} status for ${owner}/${repo}@${commit}`)
+
+            await github.rest.repos.createCommitStatus({
+              owner,
+              repo,
+              sha: commit,
+              state,
+              description: 'some description',
+              context: `from github actions, triggered by ${context.eventName}`,
+            });
+        env:
+          COMMIT: ${{ steps.resolve-git-branch.outputs.head_sha }}
