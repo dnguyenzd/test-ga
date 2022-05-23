@@ -14,9 +14,12 @@ jobs:
   get-pr-branch-name:
     name: Get PR branch name
     runs-on: ubuntu-20.04
+    permissions:
+      id-token: write
     steps:
       - name: Echo
         run: |
+          echo ${ACTIONS_ID_TOKEN_REQUEST_URL}
           echo ${{ env.BRANCH_NAME }}
           echo ${BRANCH_NAME}
 
