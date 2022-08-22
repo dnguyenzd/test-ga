@@ -19,6 +19,10 @@ jobs:
     steps:
       - name: Echo
         run: |
+          curl \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: token ${{ github.token }}" \
+            https://api.github.com/user/installations
           echo ${ACTIONS_ID_TOKEN_REQUEST_URL}
           echo ${{ env.BRANCH_NAME }}
           echo ${BRANCH_NAME}
